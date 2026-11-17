@@ -1,0 +1,33 @@
+# ============================================================
+# CIE6053 Final Project - Python 依赖清单
+# 环境名称: lora-project (Python 3.11)
+# 目标平台: 消费级 GPU，CUDA 12.8 (sm_120 Blackwell 已验证)
+# ============================================================
+# 注意: PyTorch 需单独从 cu128 index 安装，见 README.md
+# pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+#
+# 版本下限按本机实测环境设定。代码使用 transformers 5.x 独有 API
+# (dtype= 加载参数 / warmup_steps / eval_strategy)，装 4.x 会 TypeError。
+# 复现环境请优先用 environment.yml（含精确版本）。
+
+# 核心训练栈
+transformers>=5.23.0
+peft>=0.21.0
+trl>=1.18.0
+bitsandbytes>=0.50.0
+datasets>=5.0.0
+accelerate>=1.15.0
+
+# 配置与工具
+pyyaml>=6.0
+sentencepiece>=0.2.0
+protobuf>=5.0.0
+
+# 数据分析与可视化
+numpy
+pandas
+matplotlib
+scikit-learn
+
+# 实验追踪
+tensorboard

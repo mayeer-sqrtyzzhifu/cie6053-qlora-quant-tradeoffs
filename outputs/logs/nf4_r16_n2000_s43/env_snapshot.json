@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-11-17T18:22:31.213820",
+  "phase": "pre_training",
+  "python": "3.11.18 | packaged by Anaconda, Inc. | (main, Oct 26 2026, 18:13:29) [MSC v.1942 64 bit (AMD64)]",
+  "torch": "2.11.0+cu128",
+  "cuda_compiled": "12.8",
+  "cuda_available": true,
+  "gpu_name": "NVIDIA GeForce RTX 5070 Ti Laptop GPU",
+  "compute_capability": "sm_120",
+  "vram_total_gb": 11.94,
+  "nvidia_smi": "2026/11/17 18:22:31.261, 63, 14.65 W, 0 %, 180 MHz, 335 MiB"
+}

@@ -1,0 +1,128 @@
+experiment:
+  name: qlora_tradeoff_study
+  seed: 42
+  seeds:
+  - 42
+  - 43
+  - 44
+  multi_seed_configs: []
+  total_runs_budget: 15
+  total_runs_with_explore: 19
+  explore_batch_sizes:
+  - 8
+  - 16
+  gpu_trace_interval_s: 2.0
+  default_plan: ofat
+  team:
+    mode: group
+    size: 3
+    members: []
+    note: 待补充组员名单与各自贡献；个人报告需说明工作如何融入小组项目
+model:
+  local_path: models/Qwen2.5-1.5B-Instruct
+  hf_repo_id: Qwen/Qwen2.5-1.5B-Instruct
+  max_seq_length: 256
+  torch_dtype: bfloat16
+data:
+  raw_dir: data/raw/ag_news
+  hf_repo_id: fancyzhx/ag_news
+  num_classes: 4
+  class_names:
+  - World
+  - Sports
+  - Business
+  - Sci/Tech
+  train_subset_sizes:
+  - 500
+  - 1000
+  - 2000
+  - 4000
+  val_size: 1000
+  test_split: test
+  prompt_style: chat
+  clean_text: true
+  drop_test_overlap: true
+quantization:
+- name: bf16_lora
+  load_in_4bit: false
+  load_in_8bit: false
+  bnb_4bit_quant_type: null
+- name: int8
+  load_in_4bit: false
+  load_in_8bit: true
+  bnb_4bit_quant_type: null
+- name: nf4
+  load_in_4bit: true
+  load_in_8bit: false
+  bnb_4bit_quant_type: nf4
+- name: fp4
+  load_in_4bit: true
+  load_in_8bit: false
+  bnb_4bit_quant_type: fp4
+bnb_config:
+  bnb_4bit_compute_dtype: bfloat16
+  bnb_4bit_use_double_quant: true
+  bnb_4bit_quant_storage: uint8
+lora:
+  ranks:
+  - 8
+  - 16
+  - 32
+  lora_alpha_multiplier: 2
+  lora_dropout: 0.05
+  target_modules:
+  - q_proj
+  - v_proj
+  task_type: CAUSAL_LM
+training:
+  num_epochs: 3
+  learning_rate: 0.0002
+  lr_scheduler: cosine
+  warmup_ratio: 0.03
+  batch_size: 4
+  gradient_accumulation_steps: 1
+  gradient_checkpointing: true
+  optim: paged_adamw_8bit
+  max_grad_norm: 0.3
+  logging_steps: 10
+  weight_decay: 0.001
+  eval_subset_size: 500
+evaluation:
+  protocols:
+  - native
+  - cross_nf4
+  batch_size: 8
+  inference_bench:
+    enabled: true
+    num_warmup_batches: 5
+    num_measure_batches: 50
+    batch_size: 8
+  zero_shot:
+    enabled: true
+    protocol: nf4
+    accuracy_lower_bound: 0.25
+    accuracy_upper_bound: 0.7
+    max_single_class_share: 0.5
+  store_predictions: true
+  store_confusion_matrix: true
+paths:
+  processed_data_dir: data/processed
+  checkpoints_dir: outputs/checkpoints
+  logs_dir: outputs/logs
+  results_dir: outputs/results
+  figures_dir: docs/figures
+reporting:
+  title: Accuracy–Memory–Throughput Trade-offs of QLoRA Fine-Tuning for Text Classification
+    on a Consumer-Grade GPU
+  course: CIE6053 AI Chips and Applications
+  author:
+    name: ''
+    student_id: ''
+  figure_prefix: fig
+  keep_console_log: true
+  keep_env_snapshot: true
+  keep_config_snapshot: true
+  keep_adapter_weights: true
+_cli_overrides:
+  batch_size: 8
+_snapshot_note: CLI 覆盖值见 _cli_overrides；其余字段与 configs/experiment.yaml 一致

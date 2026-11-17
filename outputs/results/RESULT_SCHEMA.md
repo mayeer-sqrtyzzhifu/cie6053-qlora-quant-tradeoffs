@@ -1,0 +1,21 @@
+# 结果字段说明（报告引用数字时以此为准）
+
+- `prompt_version / prompt_style`: 数据与提示词版本（v4_chat_template / chat）
+- `train_time_pure_s`: 纯训练耗时，不含 val 评估
+- `train_time_total_s`: 纯训练 + val 评估总耗时
+- `eval_time_s`: 训练后单次 val 评估耗时
+- `train_samples_per_s`: 训练吞吐（纯训练口径，samples/s）
+- `total_params / trainable_params`: 模型总参数量与 LoRA 可训练参数量
+- `avg_seq_len`: 训练样本平均序列长度（token）
+- `total_train_tokens`: 整次训练处理的 token 总数
+- `model_resident_memory_gb`: 模型加载后、训练前的常驻显存（权重+LoRA）
+- `weight_footprint_gb`: 设备无关的权重足迹（与常驻显存对账）
+- `peak_memory_gb`: 训练期间峰值显存（含激活）
+- `accuracy_native`: 各自量化格式评估的测试准确率
+- `accuracy_cross_nf4`: 统一 NF4 基座评估的测试准确率
+- `balanced_accuracy / macro_f1`: 平衡准确率与宏平均 F1
+- `per_class / confusion_matrix`: 每类指标与 4×4 混淆矩阵
+- `predictions / gold_labels`: 逐样本预测（7,600 条），供 McNemar
+- `infer_samples_per_s_native`: 分类前向吞吐（prefill，不含 decode）
+- `gpu_trace`: 平均/峰值温度、平均/峰值功耗、利用率、SM 时钟、是否疑似降频
+- `attempts`: 该 run 的训练尝试次数（重试后 >1）

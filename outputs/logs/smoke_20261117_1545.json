@@ -1,0 +1,43 @@
+{
+  "steps": 4,
+  "n_samples": 32,
+  "ok": true,
+  "rows": [
+    {
+      "quantization": "bf16_lora",
+      "steps": 4,
+      "ok": true,
+      "load_and_train_s": 4.1,
+      "last_loss": 5.0277,
+      "peak_memory_gb": 4.176,
+      "device": "cuda:0"
+    },
+    {
+      "quantization": "int8",
+      "steps": 4,
+      "ok": true,
+      "load_and_train_s": 6.1,
+      "last_loss": 5.021,
+      "peak_memory_gb": 5.009,
+      "device": "cuda:0"
+    },
+    {
+      "quantization": "nf4",
+      "steps": 4,
+      "ok": true,
+      "load_and_train_s": 4.0,
+      "last_loss": 4.2657,
+      "peak_memory_gb": 3.653,
+      "device": "cuda:0"
+    },
+    {
+      "quantization": "fp4",
+      "steps": 4,
+      "ok": true,
+      "load_and_train_s": 3.9,
+      "last_loss": 4.305,
+      "peak_memory_gb": 3.307,
+      "device": "cuda:0"
+    }
+  ]
+}

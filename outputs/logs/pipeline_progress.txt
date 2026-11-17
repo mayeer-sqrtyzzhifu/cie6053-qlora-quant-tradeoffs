@@ -1,0 +1,9 @@
+16:30:17 watcher started; waiting for training to finish
+17:13:43 watcher started; waiting for training to finish
+17:25:20 watcher started; waiting for training to finish
+19:55:34 training results complete: 19/19
+19:55:34 phase 3 start: evaluating 19 runs x 2 protocols
+21:13:02 evaluation finished (exit 0)
+21:13:04 summary finished (exit 0)
+21:13:07 report finished (exit 0)
+21:13:07 pipeline done

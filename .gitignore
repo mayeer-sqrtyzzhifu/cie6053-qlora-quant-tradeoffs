@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# Model weights & adapters (too large for git; see README)
+models/
+outputs/checkpoints/
+
+# Large console dump (48 MB)
+outputs/logs/eval_all.log
+
+# HF cache & OS noise
+data/raw/ag_news/.cache/
+.DS_Store
+Thumbs.db

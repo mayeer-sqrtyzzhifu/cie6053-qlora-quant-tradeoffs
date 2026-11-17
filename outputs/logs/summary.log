@@ -1,0 +1,10 @@
+[OK] ԭʼ����: summary_raw.csv (19 ����ʽ����)
+[OK] ���þۺ�: summary_by_config.csv (11 ������)
+[OK] Zero-shot ���ձ�: ZERO_SHOT.md
+[OK] ʵ�����ͼ: fig02_matrix.png
+[OK] ѵ������: fig03_train_curves.png
+[OK] zero-shot ����ͼ: fig08_zero_shot_by_quant.png
+[OK] Ӳ������ָ��: HARDWARE_SUMMARY.md
+[OK] �Ƽ���������ʵɸѡ��: RECOMMENDATIONS.md
+[OK] McNemar ��Լ���: MCNEMAR.md
+[OK] ������ͼ��: fig01_pipeline.png, fig02_matrix.png, fig03_train_curves.png, fig04_tradeoff_plots.png, fig05_protocol_agreement.png, fig06_multiseed_variance.png, fig07_power_vs_throughput.png, fig08_zero_shot_by_quant.png

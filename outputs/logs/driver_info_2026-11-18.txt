@@ -1,0 +1,6 @@
+driver_info — 2026-11-18 补充记录（实验后同机查询）
+
+name, driver_version, memory.total [MiB]
+NVIDIA GeForce RTX 5070 Ti Laptop GPU, 596.49, 12227 MiB
+
+| NVIDIA-SMI 596.49                 Driver Version: 596.49         CUDA Version: 13.2     |

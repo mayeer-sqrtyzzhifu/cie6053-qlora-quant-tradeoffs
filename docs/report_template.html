@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>{{TITLE}}</title>
+<style>
+  @page { size: A4; margin: 20mm 18mm 18mm 18mm; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: #1b1f24; background: #fff;
+    font-family: "Source Han Serif SC", "Songti SC", "SimSun", "Microsoft YaHei", serif;
+    font-size: 10.5pt; line-height: 1.75;
+  }
+  main { max-width: 174mm; margin: 0 auto; }
+  p { margin: 0 0 7pt; text-align: left; orphans: 2; widows: 2; }
+  h1 { font-size: 19pt; line-height: 1.35; margin: 0 0 4pt; font-weight: 700; color: #14243a; }
+  h2 { font-size: 13.5pt; margin: 20pt 0 7pt; padding-bottom: 3pt; border-bottom: 0.6pt solid #b9c3cf; color: #14243a; break-after: avoid; }
+  h3 { font-size: 11pt; margin: 13pt 0 4pt; color: #22303f; break-after: avoid; }
+  .eyebrow { font-size: 8.5pt; color: #6b7785; margin: 0 0 3pt; }
+  .byline { font-size: 10pt; margin: 2pt 0 1pt; }
+  .meta { font-size: 8.5pt; color: #6b7785; margin: 0 0 10pt; }
+  .abstract { border: 0.6pt solid #c9d3de; background: #f7f9fc; padding: 8pt 11pt; margin: 0 0 9pt; }
+  .abstract h2 { border: 0; margin: 0 0 4pt; font-size: 11pt; padding: 0; }
+  .abstract p { font-size: 9.5pt; }
+  .kw { font-size: 9pt; color: #4a5563; margin-top: 5pt; }
+  p.tcap { font-size: 9pt; margin: 10pt 0 3pt; font-weight: 700; color: #22303f; break-after: avoid; }
+  .tblock { break-inside: avoid; }
+  table.keep { break-inside: avoid; }
+  table { border-collapse: collapse; width: 100%; margin: 0 0 10pt; font-size: 8.2pt; line-height: 1.35; }
+  thead { display: table-header-group; }
+  th, td { border: 0.5pt solid #aeb9c6; padding: 2.6pt 4pt; vertical-align: top; }
+  th { background: #e6ecf3; font-weight: 700; text-align: left; }
+  td.num, th.num { text-align: right; }
+  tbody tr:nth-child(even) td { background: #f7f9fb; }
+  tr { break-inside: avoid; }
+  code { font-family: Consolas, "Courier New", monospace; font-size: 8.8pt; background: #f2f4f7; padding: 0 1.5pt; }
+  figure { margin: 6pt 0 9pt; break-inside: avoid; text-align: center; }
+  figure img { max-width: 100%; max-height: 102mm; width: auto; height: auto; }
+  figure.small img { max-width: 78%; }
+  figcaption { font-size: 8.8pt; color: #4a5563; margin-top: 3pt; text-align: center; }
+  ul, ol { margin: 0 0 8pt; padding-left: 17pt; }
+  li { margin: 0 0 3pt; }
+  .note { font-size: 9pt; color: #3d4a58; border-left: 2pt solid #7f9ec4; padding: 3pt 0 3pt 8pt; margin: 8pt 0; }
+  .todo { background: #fff6e0; border: 0.6pt dashed #d8ae52; padding: 6pt 9pt; font-size: 9pt; }
+  footer { margin-top: 16pt; border-top: 0.5pt solid #c9d3de; padding-top: 5pt; font-size: 8pt; color: #6b7785; text-align: right; }
+  .refs { font-size: 9pt; }
+  .refs li { margin-bottom: 4pt; }
+  @media screen { body { background: #eef1f4; padding: 20px 0 60px; } main { background: #fff; padding: 16mm 18mm; box-shadow: 0 1px 10px rgba(0,0,0,.08); } }
+</style>
+</head>
+<body>
+<main>
+
+  <p class="eyebrow">{{COURSE}} · Final Project Report</p>
+  <h1>{{TITLE}}</h1>
+  <p class="byline">{{AUTHOR_LINE}}</p>
+  {{STATUS_BANNER}}
+
+  <div class="abstract">
+    <h2>摘要</h2>
+    {{ABS}}
+    <p class="kw"><b>关键词：</b>QLoRA；量化格式；NF4；显存瓶颈；消费级 GPU；能效</p>
+  </div>
+
+  <h2>1　引言</h2>
+  <h3>1.1　问题与背景</h3>
+  <p>在 12 GB 级消费级显卡上微调 1.5B 规模的指令模型，显存是第一个约束：BF16 权重、优化器状态与激活值三者叠加，
+  很容易越过预算。QLoRA 的做法是把基座压到 4-bit、冻结权重、只训练低秩适配器，并配合分页优化器吸收显存尖峰，
+  使这类硬件上的微调成为可能 [1]。</p>
+  <p>能跑通不等于划算。四种格式同时改变权重精度、常驻显存和矩阵乘路径：4-bit 权重在计算前要反量化，
+  计算仍在 BF16 完成，省下的显存未必转化为速度；INT8 的实现路径又不同。再叠加 LoRA 秩与样本量的边际收益递减，
+  "在 12 GB 预算下应该怎么配"不能靠直觉回答。</p>
+  <p>课程中的量化讨论多集中在推理侧（INT8 部署、算子优化）。训练侧四种基座精度在同一流程下的横向对比，
+  以及"省下的显存是否换来了速度"这个问题，在消费级硬件上缺少可复现的定量证据。本文用一组受控实验补上这一块。</p>
+
+  <h3>1.2　研究问题</h3>
+  <p>RQ1　在 12 GB 预算下，INT8、NF4、FP4 相对 BF16 LoRA 的精度代价与显存收益分别是多少？精度损失是否落在 1 个百分点以内？</p>
+  <p>RQ2　LoRA 秩从 8 增到 32、训练样本从 500 增到 4,000 时，准确率的绝对增益在哪一侧更大？（两种变化对应的训练计算量不同，单位成本比较不在本实验设计内。）</p>
+  <p>RQ3　在已测配置中，准确率、显存、吞吐是否存在同时占优的配置？两种评估协议（各自格式 / 统一 NF4）是否会改变结论？</p>
+
+  <h3>1.3　课程主题对应</h3>
+  <p>本工作覆盖四个主题。<b>量化</b>：BF16/INT8/NF4/FP4 的统一流程对比。
+  <b>内存瓶颈</b>：区分权重常驻与激活峰值，并回答预算内可支持的最大批量。
+  <b>用于 AI 加速的 GPU</b>：消费级 GPU 的功耗、利用率、SM 时钟与降频。
+  <b>神经网络</b>：QLoRA 微调与分类任务的完整训练与评估链路。</p>
+
+  <h3>1.4　项目产出、动机与创新（评分 Part 1）</h3>
+  {{PART1}}
+
+  <h2>2　相关工作与本工作的起点</h2>
+  <p>LoRA 把权重更新分解为低秩乘积，只训练适配器而冻结基座 [3]，PEFT 提供了标准实现 [6]。
+  LLM.int8() 用分块混合精度把矩阵乘降到 INT8，并对激活中的离群值保留高精度计算 [2]；
+  QLoRA 在此基础上提出 NF4 数据格式与双重量化，使大模型能在单卡上微调 [1]，bitsandbytes 是其主要实现 [5]。
+  这些工作回答的是"能否在低显存下训练"，评测以困惑度与下游精度为主；本文关心的是
+  "同样的训练流程下，四种基座精度的代价结构如何不同"，并把训练与推理的吞吐、常驻与峰值的显存分开测量。</p>
+
+  <h3>2.1　起点、基线与增量（评分 Part 2）</h3>
+  {{PART2}}
+
+  <h2>3　方法</h2>
+  <h3>3.1　数据与预处理</h3>
+  <p>任务为 AG News 四分类（World / Sports / Business / Sci/Tech）[8]，使用官方划分：训练 120,000 条、测试 7,600 条，
+  四类各占 25%。抽样顺序是：先从清洗后的训练池分层抽出 1,000 条验证集，再在剩余池中分层抽出四档训练子集
+  （500 / 1,000 / 2,000 / 4,000），四档互为嵌套。由于 AG News 训练池内部存在重复文本，
+  抽样后额外检查了验证集与四档子集的文本重叠，发现有 1 条重复，已用池中未被占用的样本替换；
+  修复后四档重叠均为 0（见表 1）。</p>
+  <p>原始文本有两类系统性噪声：约 11% 的训练文本含 CSV 转义残留的反斜杠，另有数万处残缺 HTML 实体（如 <code>#36;</code> 应为 <code>$</code>）。
+  训练与测试施加相同的规范化（反斜杠转空格、实体还原、空白压缩），随后以归一化文本比对训练池与测试集，
+  剔除归一化后与测试样本完全相同的 28 条训练样本（精确匹配，未做模糊相似度检测）。样本的 prompt、completion 与 EOS 合计不超过 256 token；少量超长样本收缩新闻正文，
+  而不是截断标签，以保证监督信号完整。各步计数写入数据审计，见表 1。</p>
+  <div class="tblock">
+  <p class="tcap">表 1　数据审计（来源：data/processed/metadata.json）</p>
+  {{DATA_AUDIT}}
+  </div>
+
+  <h3>3.2　提示词与监督信号</h3>
+  <p>提示词使用 Qwen2.5 官方 chat template：用户轮包含任务指令与新闻正文，
+  <code>add_generation_prompt=True</code> 使类别判定落在 assistant 轮的第一个 token；
+  微调目标是类别名（如 <code> World</code>）加 <code>&lt;|im_end|&gt;</code>。训练与评估共用同一构造函数，
+  判定位置一致，因此零样本与微调后的准确率可以直接比较。</p>
+  <p>训练只对 completion 计算损失，prompt 部分标签置为 -100，模型学的是"输出类别名"而不是复述指令。
+  评估不做文本生成：取最后一个位置在四个类别首 token 上的 logits 取 argmax，与监督位置完全对齐，也避免了生成式解析的误差。</p>
+
+  <h3>3.3　量化格式与 LoRA</h3>
+  <p>基座为 Qwen2.5-1.5B-Instruct [7]。四种基座精度：BF16 LoRA（不量化，作为对照）、
+  INT8（<code>load_in_8bit</code>，bitsandbytes 的 MatMul8bitLt）、
+  NF4（4-bit NormalFloat + 双重量化）、FP4（4-bit 浮点）。4-bit 的计算 dtype 统一为 BF16；
+  INT8 路径在库内部会把输入转为 FP16 计算，数值行为与 4-bit 不同，结果中与 4-bit 分开解读。</p>
+  <p>LoRA 作用于注意力层的 <code>q_proj</code> 与 <code>v_proj</code>，秩 r ∈ {8, 16, 32}，<code>lora_alpha = 2r</code>，
+  dropout 0.05；优化器 <code>paged_adamw_8bit</code> [4]（分页 8-bit 优化器），开启梯度检查点，3 个 epoch，余弦调度，学习率 2e-4，
+  warmup 3%，max_grad_norm 0.3。</p>
+
+  <h3>3.4　两种评估协议</h3>
+  <p>若所有适配器都用统一 NF4 基座评估，BF16 适配器会额外承受一次量化误差，绝对精度被低估；
+  若都用各自格式评估，跨格式比较又依赖不同基座。因此同时报告两种结果：<code>native</code> 用训练时的格式加载基座并评估对应适配器（主结果），
+  <code>cross_nf4</code> 把全部适配器放在 NF4 基座上评估（交叉检验）。两者在同一设备上执行，
+  非量化分支显式搬到 GPU 并加断言，避免 CPU 前向污染吞吐。</p>
+
+  <h3>3.5　指标口径与统计方法</h3>
+  <p>精度侧报告 accuracy、balanced accuracy、macro-F1、每类召回与 4×4 混淆矩阵，并保存 7,600 条逐样本预测。
+  显存按三层记录（定义见 4.1）：<b>模型常驻</b>、<b>训练分配器峰值</b>与<b>设备占用</b>。
+  吞吐分两条轴：<b>训练吞吐</b>按纯训练时间计（不含验证评估），<b>推理吞吐</b>指分类前向（prefill，不含自回归解码）。
+  功耗、温度与利用率由训练期每 2 秒一次的采样记录；完整的测量范围与边界见附录 B 表 B1。</p>
+  <p>关键配置各跑三个种子以估计训练随机性；配置间差异用 seed=42 的同一批逐样本预测做 McNemar 精确检验。
+  需要注意两类统计单位不能混用：配对检验回答"这一次运行的逐样本差异是否超出偶然"，
+  三个种子的均值差只描述训练随机性。一次比较 6 组会抬高假阳性，因此同时给出 Holm 校正后的 p 值，
+  并以校正结果判断是否存在显著差异。</p>
+
+  <h2>4　实验设置</h2>
+  <p>整体流程见图 1：数据分层抽样后按四种基座精度做 QLoRA 微调，再做双协议评估与三轴指标汇总。</p>
+  {{FIG01}}
+  <h3>4.1　硬件与软件</h3>
+  <p>单块 NVIDIA GeForce RTX 5070 Ti Laptop GPU（sm_120，Blackwell），显存 11.94 GB；
+  nvidia-smi 报告的功耗上限约 140 W，训练期采样峰值为 141.9 W（瞬时尖峰，未触发降频标记）。
+  驱动版本未写入运行快照；实验后在同一台机器补记：驱动 596.49 / CUDA 13.2
+  （输出见 <code>outputs/logs/driver_info_2026-11-18.txt</code>）。软件为 Python 3.11.18、PyTorch 2.11.0+cu128、Transformers 5.23.0、PEFT 0.21.3、
+  bitsandbytes 0.50.2、datasets 5.2.0、accelerate 1.15.0，完整清单见 <code>environment.yml</code>。
+  每次运行另存配置快照与环境快照，便于回溯。</p>
+  <p>显存分三层记录，回答不同问题：
+  <b>① 模型常驻</b>（加载后、训练前的 <code>torch.cuda.memory_allocated()</code> 增量）——比较不同精度下权重与适配器的开销；
+  <b>② 训练峰值</b>（<code>torch.cuda.max_memory_allocated()</code>）——比较训练期张量分配需求；
+  <b>③ 设备占用</b>（<code>nvidia-smi memory.used</code> 采样，含 CUDA 上下文、驱动与同机其他进程）——
+  判断真实显卡还剩多少余量、何时会 OOM。三者不能互相换算，也不能相减。</p>
+  <p>单位说明：本报告中的 GB/GiB 均按 1024³ 字节计（即 GiB），卡容量为 11.94 GiB；
+  "12 GB 预算"指<b>分配器峰值</b>口径下的工程预算，而不是物理显存容量的完整判据——
+  判断能否再加 batch 应看设备占用（表 8 的最后一列）。</p>
+
+  <h3>4.2　实验矩阵</h3>
+  <p>主矩阵为单因素设计，以 <code>nf4 / r16 / n2000</code> 为中心点，沿量化格式、LoRA 秩、样本量三个方向扫描；
+  bf16、int8、nf4 三个关键配置各跑 3 个种子，fp4 补齐 3 个种子，另加 <code>nf4 + batch 8/16</code> 两次探索运行，
+  共 {{N_RUNS}} 次训练。每次训练对应 native 与 cross-NF4 两次评估，另有四种格式的零样本基线。
+  实际执行矩阵见图 2（由结果文件统计，不是按配置推算）。</p>
+  {{FIG02}}
+
+  <h3>4.3　训练与留档</h3>
+  <p>batch size 4、梯度累积 1、序列上限 256 token（训练样本平均约 119 token）。每次运行保存六项留档：
+  指标 JSON、环境快照、配置快照、控制台日志（含完整损失曲线）、GPU 采样 CSV、LoRA 适配器。
+  失败的运行会单独记录并披露；中断后可用 <code>--resume</code> 续跑。训练按运行逐个隔离进程，
+  避免上一轮的显存残留污染下一轮读数。</p>
+
+  <h2>5　结果</h2>
+  <h3>5.1　准确率、显存与吞吐</h3>
+  <p>{{RESULT_INTRO}}</p>
+  <p class="tcap">表 2　各运行的双协议准确率（native 为主结果）</p>
+  {{MAIN_TABLE_ACC}}
+  <p class="tcap">表 3　各运行的显存与吞吐（常驻为权重加 LoRA 的分配增量，峰值为训练期分配器峰值；百分比均由未舍入值计算，例如常驻 2.884→1.517 GB 得 −47.4%）</p>
+  {{MAIN_TABLE_RES}}
+  {{FIG03}}
+  <p>总准确率掩盖了类别之间的差异。表 4 给出标准配置下四种格式的每类召回，表 5 给出 NF4 的混淆矩阵：
+  四个类别中 Business 最难（召回约 0.86），Sports 最易（约 0.98），量化的影响主要体现在弱类上。</p>
+  <div class="tblock">
+  <p class="tcap">表 4　标准配置下的每类召回（native，r16/n2000，seed=42）</p>
+  {{PER_CLASS}}
+  </div>
+  <div class="tblock">
+  <p class="tcap">表 5　NF4 标准配置的混淆矩阵（行=真值，列=预测）</p>
+  {{CONFUSION}}
+  </div>
+
+  <h3>5.2　零样本基线</h3>
+  <p>四种格式在不加载适配器时的表现见表 6 与图 4。四种格式都没有出现预测塌缩（最大单类占比 0.35–0.43），
+  但准确率并不随基座精度单调变化：NF4 最高、INT8 最低（见表 6）。{{FP32_TEXT}}</p>
+  <div class="tblock">
+  <p class="tcap">表 6　四种基座的零样本结果（7,600 条测试样本）</p>
+  {{ZERO_SHOT_TABLE}}
+  </div>
+  {{FIG04}}
+
+  <h3>5.3　准确率—显存—吞吐的权衡</h3>
+  <p>图 5 从三个方向看同一批运行。{{TRADEOFF_TEXT}}</p>
+  {{FIG05}}
+
+  <h3>5.4　两种评估协议</h3>
+  <p>native 用训练时的格式加载基座，cross-NF4 把全部适配器放在 NF4 基座上评估。图 6 画出 19 个运行在两种协议下的
+  准确率：数值上接近但排序不一致（统计量与逐运行值见下段与表 2）。</p>
+  {{FIG06}}
+  <p>{{PROTOCOL_TEXT}}排序变化中，BF16 从第 1 跌到第 4 是稳健的；native 下 FP4 与 NF4 只差 0.01 个百分点，
+  它们的相邻名次互换处于种子噪声内，不宜当作真实排序变化（表 7）。</p>
+  <div class="tblock">
+  <p class="tcap">表 7　标准配置下两种协议的均值与排序（r16/n2000，3 种子）</p>
+  {{PROTOCOL_TABLE}}
+  </div>
+
+  <h3>5.5　三个种子之间的波动</h3>
+  <p>图 7 给出四个标准配置的均值与标准差。三个种子的标准差为 0.0008–0.0025，与格式之间的差异
+  （约 0.0029–0.0033）同量级，因此单凭种子方差不足以判断配置差异，需要配对检验；
+  注意本文的配对检验只用了 s42 这一个种子（见 5.7）。</p>
+  {{FIG07}}
+
+  <h3>5.6　功耗与能效</h3>
+  <p>表 8 与图 8 把硬件侧的数据补齐。BF16 的训练吞吐与每焦耳 token 数都约为 4-bit 的两倍，
+  INT8 的利用率只有约 48%（其余格式约 83–85%），说明它的瓶颈不在 GPU 的计算单元，而在量化与类型转换的路径上。
+  设备峰值列给出整卡占用（每格式取种子最大）：BF16 11.58 GiB、INT8 11.50、NF4 11.19、FP4 11.07 GiB，
+  bs16 探索运行 11.56 GiB，在 11.94 GiB 的卡上只剩不到 0.4 GiB 余量。
+  该列每格式取三种子最大；BF16 只有 s43/s44 有采样，三种子均值为 INT8 10.59、NF4 10.14、FP4 10.21 GiB。
+  由于设备占用含驱动与上下文，四者最大差距约 0.51 GiB，远小于分配器峰值的 3.1 GiB 差距。</p>
+  {{FIG08}}
+  <div class="tblock">
+  <p class="tcap">表 8　标准配置的硬件派生指标（r16/n2000/batch 4，温度单位 °C）</p>
+  {{HARDWARE_TABLE}}
+  <p class="note">名义 TFLOPS 用 6ND 近似估算，N 统一取 BF16 模型的未打包参数量 1,545,893,376。
+  对 QLoRA 来说 6ND 不是"全参数训练"的分解：冻结基座不需要权重梯度（省 2ND），但仍需输入梯度（2ND），
+  而梯度检查点会在反向时重算一次前向（再 2ND），三者合计仍约为 6ND。
+  未计入的部分包括：注意力二次项（seq≈256、d=1536 时约占 8%）、LoRA 适配器自身的小量计算、
+  以及 bnb 的反量化开销——后者只体现在实测吞吐里。因此该列是<b>名义计算吞吐</b>，
+  不能解读为硬件峰值利用率，只能用于同平台横向比较。</p>
+  </div>
+
+  <h3>5.7　配对显著性检验</h3>
+  <p>{{MCNEMAR_TEXT}}</p>
+  <div class="tblock">
+  <p class="tcap">表 9　McNemar 配对检验（标准配置 r16/n2000/batch 4，seed=42，7,600 条配对样本）</p>
+  {{MCNEMAR_TABLE}}
+  </div>
+
+  <h2>6　讨论</h2>
+  <h3>6.1　按约束条件选配置</h3>
+  <p>把"12 GB 分配器峰值预算"和"1 个百分点精度预算"作为约束，推荐不是唯一的，取决于哪个资源更紧；
+  需要说明的是，全部候选的分配器峰值只有 3.86–6.97 GB，本实验的 12 GB 预算对它们<b>都不构成约束</b>，
+  真正接近 11.94 GiB 上限的是整卡设备占用（11.07–11.58 GiB）。候选与筛选结果见表 10。{{REC_TEXT}}</p>
+  <div class="tblock">
+  <p class="tcap">表 10　预算内候选与筛选结果（BF16 仅作参照，不参与推荐）</p>
+  {{RECOMMEND_TABLE}}
+  <p class="note">表中「✓」仅表示满足筛选条件（分配器峰值 ≤ 12 GB、准确率 ≥ BF16 − 1 pp、有推理吞吐），
+  不代表 Pareto 最优或最终推荐；最终推荐只取「≥3 种子」候选中的一个，其余为边界方案。
+  *「工程等价」指其三种子均值差低于事后设定的 0.30 pp 阈值；本文没有做 TOST 或置信区间，
+  因此这是阈值判据，不是统计等效性检验。</p>
+  </div>
+
+  <h3>6.2　结果为什么是这样</h3>
+  <p>4-bit 与 BF16 的差别有两处：权重常驻（2.88 GB → 1.52 GB）与每次矩阵乘前的反量化。
+  观测到的吞吐与能效下降与"反量化带来额外开销"的解释一致，但本次没有单独测量这部分开销，
+  也不能排除实现与调度因素，因此不把它写成已确认的因果。峰值显存同时受激活与梯度检查点影响，
+  只看峰值会低估量化的价值，因此本文把常驻与峰值分列。INT8 的问题在实现路径：MatMul8bitLt 先把 BF16 输入转成 FP16 再计算，
+  额外转换使它既没有 4-bit 的显存优势，也没有 BF16 的速度。这一解释与观测一致
+  （SM 利用率 47.8%、训练吞吐 7.6 samples/s），但转换开销本身没有被单独测量。</p>
+
+  <h3>6.3　研究问题的回答</h3>
+  {{RQ_ANSWERS}}
+
+  <h3>6.4　局限</h3>
+  <p>四种格式实际是"数值精度 + 软件执行路径"的组合：INT8 在库内部转 FP16 计算、4-bit 需要反量化、
+  BF16 无转换，因此格式之间的差异不能单独归因于"位宽"，也不能外推到其他量化实现；
+  本实验只覆盖一个 1.5B 模型、一个数据集和 256 token 的序列上限，结论不宜外推到更长上下文或更大模型；
+  只使用了 bitsandbytes 一种量化实现，未与 GPTQ、AWQ、GGUF 等对比；推理指标只测分类前向，未测自回归解码；
+  batch 固定为 4，4-bit 省下的显存没有转化为吞吐，这一点只由两次 batch 8/16 探索运行给出边界；
+  硬件是消费级笔记本 GPU，格式间运行分散在约 2.5 小时内，日志未标记降频（峰值温度 79–84 °C），
+  格式间吞吐差也远大于同格式的种子内波动，但跨时段比较仍不如同一批次内严格；
+  部分配置为单种子（11 个配置中 7 个单种子，占 19 次运行的 7/19），相关趋势属于工程测量；
+  OFAT 设计只能回答主效应，不能回答量化格式与样本量的交互（只有 NF4 跑了四档样本量）；
+  batch 8/16 各只有 1 次单种子探索，且 bs16 设备峰值已达 11.56 GiB，"预算内最大批量"只能算粗略边界；
+  fp32 对照只覆盖 400 条样本的单次评估；<b>主推荐 fp4_r16_n2000 是在测试集上比较 11 个候选后选出的</b>，
+  其 0.9121 的准确率对这种选择存在选择性偏差；0.30 pp 的工程等价阈值与训练时长 tie-break 均为事后规则，
+  不是实验前预注册；
+  超参与训练配置只依据验证集与训练损失确定，未在测试集上调参；但最终展示配置（第 6.1 节）是在测试集准确率上比较候选后选出的，这一点已在上句披露。</p>
+
+  <h2>7　结论</h2>
+  {{CONCL}}
+
+  <h2>8　参考文献</h2>
+  <ol class="refs">
+    <li>Dettmers T., Pagnoni A., Holtzman A., Zettlemoyer L. QLoRA: Efficient Finetuning of Quantized LLMs. NeurIPS 2023. arXiv:2305.14314.</li>
+    <li>Dettmers T., Lewis M., Belkada Y., Zettlemoyer L. LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale. NeurIPS 2022. arXiv:2208.07339.</li>
+    <li>Hu E. J., Shen Y., Wallis P., et al. LoRA: Low-Rank Adaptation of Large Language Models. ICLR 2022. arXiv:2106.09685.</li>
+    <li>Dettmers T., Lewis M., Shleifer S., Zettlemoyer L. 8-bit Optimizers via Block-wise Quantization. ICLR 2022. arXiv:2110.02861.</li>
+    <li>bitsandbytes: 8-bit optimizers and quantization for PyTorch. https://github.com/bitsandbytes-foundation/bitsandbytes</li>
+    <li>HuggingFace PEFT: Parameter-Efficient Fine-Tuning. https://github.com/huggingface/peft</li>
+    <li>Qwen Team. Qwen2.5 Technical Report. arXiv:2412.15115.</li>
+    <li>Zhang X., Zhao J., LeCun Y. Character-level Convolutional Networks for Text Classification. NeurIPS 2015. arXiv:1509.01626.（AG News 来源）</li>
+  </ol>
+
+  <h2>9　个人贡献与反思</h2>
+  {{REFLECTION}}
+
+  <h2>附录 A　结果字段说明</h2>
+  <p>报告中的数字均可在 <code>outputs/results/</code> 的 JSON 中按表 A1 的字段核对。</p>
+  <div class="tblock">
+  <p class="tcap">表 A1　主要字段</p>
+  {{APPENDIX_SCHEMA}}
+  </div>
+
+  <h2>附录 B　测量协议</h2>
+  <div class="tblock">
+  <p class="tcap">表 B1　各指标的测量范围与边界</p>
+  <table>
+    <thead><tr><th>指标</th><th>测量方式与边界</th></tr></thead>
+    <tbody>
+      <tr><td>训练吞吐</td><td>样本数×epoch ÷ 纯训练时间；计时区间为 <code>trainer.train()</code>，含数据加载与日志，
+      不含训练后的验证评估与最终 checkpoint 保存；19 次运行各测一次。</td></tr>
+      <tr><td>推理吞吐</td><td>分类前向（prefill，不含自回归解码）；batch 8，先跑 5 个 warm-up batch，
+      再测 50 个 batch，每个 batch 前后 <code>torch.cuda.synchronize()</code>，报 50 个 batch 的平均。</td></tr>
+      <tr><td>GPU 功耗</td><td><code>nvidia-smi</code> 每 2 s 采样一次 <code>power.draw</code>，取训练期样本均值；
+      是 GPU 板卡功耗，不含 CPU 与整机。</td></tr>
+      <tr><td>tokens/J</td><td>训练 tokens/s ÷ 平均板卡功耗；即 GPU 板卡级能效，不是整个训练系统的能效。</td></tr>
+      <tr><td>显存</td><td>三层：模型常驻（加载增量）、训练分配器峰值（<code>max_memory_allocated</code>）、
+      设备占用（<code>nvidia-smi memory.used</code> 峰值，含驱动、上下文与其他进程）。单位均为 GiB（1024³ B）。</td></tr>
+      <tr><td>名义 TFLOPS</td><td>6ND 近似，N 为未打包参数量 1,545,893,376；QLoRA 下 6ND ≈ 前向 2ND + 输入梯度 2ND +
+      梯度检查点重算 2ND；未计注意力二次项（≈8%）、适配器计算与 bnb 反量化。</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <footer>CIE6053 AI Chips and Applications · Final Project · {{AUTHOR_LINE}}</footer>
+</main>
+</body>
+</html>

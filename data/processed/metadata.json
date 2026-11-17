@@ -1,0 +1,196 @@
+{
+  "seed": 42,
+  "class_names": [
+    "World",
+    "Sports",
+    "Business",
+    "Sci/Tech"
+  ],
+  "subset_sizes": [
+    500,
+    1000,
+    2000,
+    4000
+  ],
+  "val_size": 1000,
+  "test_size": 7600,
+  "prompt_style": "chat",
+  "prompt_version": "v4_chat_template",
+  "prompt_template": "<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nYou are a news classifier. Classify the following news into exactly one of these categories: World, Sports, Business, Sci/Tech.\n\nNews: <TEXT>\n\nAnswer with only the category name.<|im_end|>\n<|im_start|>assistant\n",
+  "label_token_ids": {
+    "World": 4337,
+    "Sports": 13180,
+    "Business": 8025,
+    "Sci/Tech": 40372
+  },
+  "eos_token_id": 151645,
+  "eos_token": "<|im_end|>",
+  "source": "fancyzhx/ag_news (Apache-2.0 / CC0)",
+  "audit": {
+    "prompt_style": "chat",
+    "prompt_version": "v4_chat_template",
+    "max_seq_length": 256,
+    "clean_text": true,
+    "drop_test_overlap": true,
+    "raw_rows": {
+      "train": 120000,
+      "test": 7600
+    },
+    "backslash_fixed": {
+      "train": 13146,
+      "test": 808
+    },
+    "html_entity_restored": {
+      "train": 46729,
+      "test": 2930
+    },
+    "empty_after_clean": 0,
+    "train_rows_matching_test_normalized": 28,
+    "train_pool_rows": 119972,
+    "val_subset_overlap_repaired": 1,
+    "files": {
+      "train_500": {
+        "rows": 500,
+        "class_dist": {
+          "World": 125,
+          "Sports": 125,
+          "Business": 125,
+          "Sci/Tech": 125
+        },
+        "unique_prompts": 500,
+        "duplicate_prompts": 0,
+        "tokens": {
+          "min": 88,
+          "median": 117,
+          "p95": 150,
+          "max": 253,
+          "mean": 119.0
+        },
+        "truncated_texts": 3
+      },
+      "train_1000": {
+        "rows": 1000,
+        "class_dist": {
+          "World": 250,
+          "Sports": 250,
+          "Business": 250,
+          "Sci/Tech": 250
+        },
+        "unique_prompts": 1000,
+        "duplicate_prompts": 0,
+        "tokens": {
+          "min": 88,
+          "median": 117,
+          "p95": 147,
+          "max": 253,
+          "mean": 119.3
+        },
+        "truncated_texts": 3
+      },
+      "train_2000": {
+        "rows": 2000,
+        "class_dist": {
+          "World": 500,
+          "Sports": 500,
+          "Business": 500,
+          "Sci/Tech": 500
+        },
+        "unique_prompts": 2000,
+        "duplicate_prompts": 0,
+        "tokens": {
+          "min": 87,
+          "median": 117,
+          "p95": 146,
+          "max": 253,
+          "mean": 119.0
+        },
+        "truncated_texts": 3
+      },
+      "train_4000": {
+        "rows": 4000,
+        "class_dist": {
+          "World": 1000,
+          "Sports": 1000,
+          "Business": 1000,
+          "Sci/Tech": 1000
+        },
+        "unique_prompts": 4000,
+        "duplicate_prompts": 0,
+        "tokens": {
+          "min": 86,
+          "median": 117,
+          "p95": 148,
+          "max": 253,
+          "mean": 119.2
+        },
+        "truncated_texts": 4
+      },
+      "val": {
+        "rows": 1000,
+        "class_dist": {
+          "World": 251,
+          "Sports": 250,
+          "Business": 250,
+          "Sci/Tech": 249
+        },
+        "unique_prompts": 1000,
+        "duplicate_prompts": 0,
+        "tokens": {
+          "min": 89,
+          "median": 117,
+          "p95": 147,
+          "max": 227,
+          "mean": 119.1
+        },
+        "truncated_texts": 0
+      },
+      "test": {
+        "rows": 7600,
+        "class_dist": {
+          "World": 1900,
+          "Sports": 1900,
+          "Business": 1900,
+          "Sci/Tech": 1900
+        },
+        "unique_prompts": 7600,
+        "duplicate_prompts": 0,
+        "tokens": {
+          "min": 85,
+          "median": 117,
+          "p95": 144,
+          "max": 253,
+          "mean": 118.9
+        },
+        "truncated_texts": 5
+      }
+    },
+    "checks": {
+      "val_vs_test_overlap": 0,
+      "train_subset_vs_test_overlap": {
+        "train_500": 0,
+        "train_1000": 0,
+        "train_2000": 0,
+        "train_4000": 0
+      },
+      "val_vs_train_subset_overlap": {
+        "train_500": 0,
+        "train_1000": 0,
+        "train_2000": 0,
+        "train_4000": 0
+      },
+      "nested_subsets": {
+        "train_500_in_train_1000": true,
+        "train_1000_in_train_2000": true,
+        "train_2000_in_train_4000": true
+      },
+      "samples_over_max_seq_length": {
+        "train_500": 0,
+        "train_1000": 0,
+        "train_2000": 0,
+        "train_4000": 0,
+        "val": 0,
+        "test": 0
+      }
+    }
+  }
+}

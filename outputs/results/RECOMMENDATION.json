@@ -1,0 +1,190 @@
+{
+  "picked": {
+    "label": "fp4_r16_n2000",
+    "accuracy": 0.9121,
+    "threshold_equivalent": true,
+    "peak_mem_gb": 3.862,
+    "resident_mem_gb": 1.517,
+    "infer_tp": 71.9,
+    "train_tp": 14.0,
+    "train_s": 427.8,
+    "mem_saving_pct": 44.6,
+    "acc_delta_pp": -0.28,
+    "n_seeds": 3
+  },
+  "bf16_acc": 0.9149666666666666,
+  "bf16_mem": 6.967333333333333,
+  "budget_gb": 12.0,
+  "tol": 0.01,
+  "alternatives": {
+    "best_accuracy": {
+      "label": "nf4_r16_n4000",
+      "accuracy": 0.9233,
+      "threshold_equivalent": false,
+      "peak_mem_gb": 3.862,
+      "resident_mem_gb": 1.517,
+      "infer_tp": 71.7,
+      "train_tp": 13.6,
+      "train_s": 880.5,
+      "mem_saving_pct": 44.6,
+      "acc_delta_pp": 0.83,
+      "n_seeds": 1
+    },
+    "cheapest_training": {
+      "label": "nf4_r16_n1000",
+      "accuracy": 0.9076,
+      "threshold_equivalent": false,
+      "peak_mem_gb": 3.862,
+      "resident_mem_gb": 1.517,
+      "infer_tp": 71.8,
+      "train_tp": 13.2,
+      "train_s": 227.5,
+      "mem_saving_pct": 44.6,
+      "acc_delta_pp": -0.74,
+      "n_seeds": 1
+    }
+  },
+  "candidates": [
+    {
+      "label": "bf16_lora_r16_n2000",
+      "accuracy": 0.915,
+      "peak_mem_gb": 6.967,
+      "train_s": 240.0,
+      "infer_tp": 79.5,
+      "n_seeds": 3,
+      "acc_std": 0.0014,
+      "eligible": false,
+      "reason": "BF16 参照基线",
+      "threshold_equivalent": false
+    },
+    {
+      "label": "fp4_r16_n2000",
+      "accuracy": 0.9121,
+      "peak_mem_gb": 3.862,
+      "train_s": 427.8,
+      "infer_tp": 71.9,
+      "n_seeds": 3,
+      "acc_std": 0.0008,
+      "eligible": true,
+      "reason": "",
+      "threshold_equivalent": true
+    },
+    {
+      "label": "int8_r16_n2000",
+      "accuracy": 0.9143,
+      "peak_mem_gb": 4.448,
+      "train_s": 796.4,
+      "infer_tp": 39.9,
+      "n_seeds": 3,
+      "acc_std": 0.0025,
+      "eligible": true,
+      "reason": "",
+      "threshold_equivalent": false
+    },
+    {
+      "label": "nf4_r8_n2000",
+      "accuracy": 0.9089,
+      "peak_mem_gb": 3.857,
+      "train_s": 449.5,
+      "infer_tp": 71.9,
+      "n_seeds": 1,
+      "acc_std": null,
+      "eligible": true,
+      "reason": "",
+      "threshold_equivalent": false
+    },
+    {
+      "label": "nf4_r16_n500",
+      "accuracy": 0.8959,
+      "peak_mem_gb": 3.862,
+      "train_s": 113.6,
+      "infer_tp": 71.8,
+      "n_seeds": 1,
+      "acc_std": null,
+      "eligible": false,
+      "reason": "精度损失 0.0191 ≥ 0.01（即 1 pp 绝对准确率）",
+      "threshold_equivalent": false
+    },
+    {
+      "label": "nf4_r16_n1000",
+      "accuracy": 0.9076,
+      "peak_mem_gb": 3.862,
+      "train_s": 227.5,
+      "infer_tp": 71.8,
+      "n_seeds": 1,
+      "acc_std": null,
+      "eligible": true,
+      "reason": "",
+      "threshold_equivalent": false
+    },
+    {
+      "label": "nf4_r16_n2000",
+      "accuracy": 0.912,
+      "peak_mem_gb": 3.862,
+      "train_s": 439.5,
+      "infer_tp": 71.9,
+      "n_seeds": 3,
+      "acc_std": 0.0015,
+      "eligible": true,
+      "reason": "",
+      "threshold_equivalent": true
+    },
+    {
+      "label": "nf4_r16_n2000_bs8",
+      "accuracy": 0.9093,
+      "peak_mem_gb": 5.751,
+      "train_s": 455.7,
+      "infer_tp": 71.8,
+      "n_seeds": 1,
+      "acc_std": null,
+      "eligible": true,
+      "reason": "",
+      "threshold_equivalent": false
+    },
+    {
+      "label": "nf4_r16_n2000_bs16",
+      "accuracy": 0.9068,
+      "peak_mem_gb": 9.523,
+      "train_s": 520.9,
+      "infer_tp": 71.8,
+      "n_seeds": 1,
+      "acc_std": null,
+      "eligible": true,
+      "reason": "",
+      "threshold_equivalent": false
+    },
+    {
+      "label": "nf4_r16_n4000",
+      "accuracy": 0.9233,
+      "peak_mem_gb": 3.862,
+      "train_s": 880.5,
+      "infer_tp": 71.7,
+      "n_seeds": 1,
+      "acc_std": null,
+      "eligible": true,
+      "reason": "",
+      "threshold_equivalent": false
+    },
+    {
+      "label": "nf4_r32_n2000",
+      "accuracy": 0.9159,
+      "peak_mem_gb": 3.875,
+      "train_s": 455.3,
+      "infer_tp": 71.7,
+      "n_seeds": 1,
+      "acc_std": null,
+      "eligible": true,
+      "reason": "",
+      "threshold_equivalent": false
+    }
+  ],
+  "tie": {
+    "labels": [
+      "fp4_r16_n2000",
+      "nf4_r16_n2000"
+    ],
+    "threshold_pp": 0.3,
+    "criterion": "精度差 ≤ 0.30 pp 按事后阈值判为工程等价（非等效性检验），等价时按训练时长取最短（整改时新增的说明性规则，非实验前预注册）",
+    "threshold_equivalent": true
+  }
+}
